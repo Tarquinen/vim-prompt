@@ -149,7 +149,7 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
 
     function handleInsertMode(event: KeyEvent, key: string, ctx: PromptContext, map: PromptMap, cursor: CursorPosition, offset: number) {
         if (key === "Escape") {
-            cancelPendingInsert(ctx, offset)
+            cancelPendingInsert(ctx, offset, false)
             sync(map, cursor)
             const result = processKeystroke(key, vim, buffer, event.ctrl, false)
             vim = result.newCtx
@@ -221,12 +221,12 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
         }, config.keymapTimeout)
     }
 
-    function cancelPendingInsert(ctx: PromptContext, offset?: number) {
+    function cancelPendingInsert(ctx: PromptContext, offset?: number, flush = true) {
         if (!keybinds?.isPending()) return
         if (timer) clearTimeout(timer)
         timer = undefined
         keybinds.cancel()
-        flushPendingInsert(ctx, pendingInsert, offset)
+        if (flush) flushPendingInsert(ctx, pendingInsert, offset)
         pendingInsert = ""
         state.setPending("")
     }

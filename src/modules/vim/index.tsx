@@ -3,7 +3,7 @@ import type { KeyEvent, ParsedKey } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { onCleanup } from "solid-js"
 import type { PromptContext, PromptModule } from "../../prompt/types"
-import { applyVimCursorStyle } from "./actions"
+import { applyVimCursorStyle, focusedInput } from "./actions"
 import type { VimConfig } from "./config"
 import { createVimConfig } from "./config"
 import { keyNotation } from "./keys"
@@ -65,6 +65,7 @@ function VimKeyboard(props: { ctx: PromptContext; config: VimConfig; state: Retu
         }
 
         if (passThroughKey(event, key, props.state.mode())) {
+            preparePassThroughKey(props.ctx, key, props.state.mode())
             syncCursorStyle(true)
             props.ctx.requestRender()
             return
@@ -111,6 +112,13 @@ function readablePending(sequence: string) {
 function passThroughKey(event: KeyEvent, key: string, mode: string) {
     if (mode !== "normal") return false
     return event.super === true || isArrowKey(key) || key === "<CR>"
+}
+
+function preparePassThroughKey(ctx: PromptContext, key: string, mode: string) {
+    if (mode !== "normal" || key !== "<CR>") return
+    const input = focusedInput(ctx)
+    if (!input?.plainText || input.cursorOffset === undefined) return
+    input.cursorOffset = Math.min(input.cursorOffset + 1, input.plainText.length)
 }
 
 function sendNavigationKey(event: KeyEvent, ctx: PromptContext, key: string, mode: string) {
