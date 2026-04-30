@@ -1,4 +1,5 @@
 /** @jsxImportSource @opentui/solid */
+import type { KeyEvent, ParsedKey } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { onCleanup } from "solid-js"
 import type { PromptContext, PromptModule } from "../../prompt/types"
@@ -63,6 +64,18 @@ function VimKeyboard(props: { ctx: PromptContext; config: VimConfig; state: Retu
             return
         }
 
+        if (passThroughKey(event, key, props.state.mode())) {
+            syncCursorStyle(true)
+            props.ctx.requestRender()
+            return
+        }
+
+        if (sendNavigationKey(event, props.ctx, key, props.state.mode())) {
+            syncCursorStyle(true)
+            props.ctx.requestRender()
+            return
+        }
+
         const consumed = vimee.handle(event, key, props.ctx)
         if (consumed) {
             event.preventDefault()
@@ -93,4 +106,48 @@ function VimKeyboard(props: { ctx: PromptContext; config: VimConfig; state: Retu
 function readablePending(sequence: string) {
     if (!sequence) return undefined
     return sequence.replaceAll("><", " ")
+}
+
+function passThroughKey(event: KeyEvent, key: string, mode: string) {
+    if (mode !== "normal") return false
+    return event.super === true || isArrowKey(key) || key === "<CR>"
+}
+
+function sendNavigationKey(event: KeyEvent, ctx: PromptContext, key: string, mode: string) {
+    if (mode !== "normal") return false
+    const forwarded = navigationKey(key)
+    if (!forwarded) return false
+
+    event.preventDefault()
+    event.stopPropagation()
+    ctx.api.renderer.keyInput.processParsedKey(forwarded)
+    return true
+}
+
+function navigationKey(key: string): ParsedKey | undefined {
+    if (key === "h") return arrowKey("left", "\u001B[D")
+    if (key === "j") return arrowKey("down", "\u001B[B")
+    if (key === "k") return arrowKey("up", "\u001B[A")
+    if (key === "l") return arrowKey("right", "\u001B[C")
+    return undefined
+}
+
+function isArrowKey(key: string) {
+    return key === "<Left>" || key === "<Down>" || key === "<Up>" || key === "<Right>"
+}
+
+function arrowKey(name: string, sequence: string): ParsedKey {
+    return {
+        name,
+        ctrl: false,
+        meta: false,
+        shift: false,
+        option: false,
+        sequence,
+        number: false,
+        raw: sequence,
+        eventType: "press",
+        source: "raw",
+        super: true,
+    }
 }
