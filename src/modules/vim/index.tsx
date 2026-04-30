@@ -123,13 +123,33 @@ function preparePassThroughKey(ctx: PromptContext, key: string, mode: string) {
 
 function sendNavigationKey(event: KeyEvent, ctx: PromptContext, key: string, mode: string) {
     if (mode !== "normal") return false
-    const forwarded = navigationKey(key)
+    const forwarded = commandNavigationKey(ctx, key)
     if (!forwarded) return false
 
     event.preventDefault()
     event.stopPropagation()
     ctx.api.renderer.keyInput.processParsedKey(forwarded)
     return true
+}
+
+function commandNavigationKey(ctx: PromptContext, key: string): ParsedKey | undefined {
+    if (!isPromptFocused(ctx)) return navigationKey(key)
+    if (!isSlashCommandToken(ctx)) return undefined
+    if (key === "j") return arrowKey("down", "\u001B[B")
+    if (key === "k") return arrowKey("up", "\u001B[A")
+    return undefined
+}
+
+function isPromptFocused(ctx: PromptContext) {
+    return ctx.prompt()?.focused === true && !!focusedInput(ctx)
+}
+
+function isSlashCommandToken(ctx: PromptContext) {
+    const text = ctx.prompt()?.current.input ?? focusedInput(ctx)?.plainText ?? ""
+    if (!text.startsWith("/")) return false
+    const input = focusedInput(ctx)
+    const offset = Math.max(0, input?.cursorOffset ?? text.length)
+    return !/\s/.test(text.slice(0, Math.min(offset + 1, text.length)))
 }
 
 function navigationKey(key: string): ParsedKey | undefined {
