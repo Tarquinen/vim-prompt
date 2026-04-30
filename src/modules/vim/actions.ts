@@ -6,11 +6,13 @@ export type EditBufferLike = {
     cursorOffset?: number
     plainText?: string
     visualCursor?: VisualCursorLike
+    editorView?: { getVisualEOL?: () => VisualCursorLike | undefined }
     cursorStyle?: VimCursorStyle
     moveCursorLeft?: () => boolean
     moveCursorRight?: () => boolean
     moveCursorUp?: () => boolean
     moveCursorDown?: () => boolean
+    gotoVisualLineEnd?: () => boolean
     gotoLineEnd?: () => void
 }
 

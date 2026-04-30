@@ -2,7 +2,7 @@ import type { KeyEvent } from "@opentui/core"
 import { TextBuffer, createInitialContext, createKeybindMap, parseKeySequence, processKeystroke } from "@vimee/core"
 import type { CursorPosition, KeybindDefinition, KeybindMap, ValidKeySequence, VimAction as VimeeAction, VimContext, VimMode as VimeeMode } from "@vimee/core"
 import type { PromptContext } from "../../prompt/types"
-import { focusedInput, setInput } from "./actions"
+import { focusedInput, setInput, type EditBufferLike } from "./actions"
 import type { VimConfig } from "./config"
 import type { VimLog } from "./log"
 import { createPromptMap, derivePromptMap, hostOffset, hostPosition, type PromptMap } from "./map"
@@ -54,6 +54,13 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
             const wasPending = keybinds?.isPending() ?? false
             const pendingBefore = pendingInsert
             sync(map, cursor)
+
+            if (vimeeKey === "A" && appendVisualLine(input, map)) {
+                state.setPending("")
+                updateTimeout(ctx)
+                log("vimee.key", { key, vimeeKey, mode: vim.mode, phase: vim.phase, cursor: vim.cursor, actions: ["mode-change"] })
+                return true
+            }
 
             const result = processKeystroke(vimeeKey, vim, buffer, event.ctrl, false, keybinds)
             vim = result.newCtx
@@ -122,7 +129,7 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
                     buffer.replaceContent(action.content)
                     break
                 case "cursor-move":
-                    if (input) input.cursorOffset = hostOffset(currentMap, action.position)
+                    setCursor(input, currentMap, action.position)
                     break
                 case "mode-change":
                     nativeInsertUndoSaved = false
@@ -137,7 +144,7 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
             }
         }
 
-        if (input) input.cursorOffset = hostOffset(currentMap, vim.cursor)
+        setCursor(input, currentMap, vim.cursor)
     }
 
     function handleInsertMode(event: KeyEvent, key: string, ctx: PromptContext, map: PromptMap, cursor: CursorPosition, offset: number) {
@@ -188,7 +195,7 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
     function applyKeybind(definition: KeybindDefinition, map: PromptMap) {
         if ("execute" in definition) {
             const actions = definition.execute(vim, buffer) as HostAction[]
-            vim = { ...vim, cursor: hostPosition(map, hostOffset(map, vim.cursor)) }
+            vim = { ...vim, cursor: hostPosition(map, cursorOffset(map, vim.cursor)) }
             return actions
         }
 
@@ -241,6 +248,34 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
         if (input) input.cursorOffset = nextOffset
         vim = { ...vim, cursor: hostPosition(activeMap, nextOffset) }
     }
+
+    function cursorOffset(map: PromptMap, position: CursorPosition) {
+        return hostOffset(map, position, vim.mode === "insert" ? "next" : "previous")
+    }
+
+    function setCursor(input: EditBufferLike | undefined, map: PromptMap, position: CursorPosition) {
+        if (!input) return
+        input.cursorOffset = cursorOffset(map, position)
+        if (vim.mode !== "insert") clampNormalCursor(input)
+    }
+
+    function appendVisualLine(input: EditBufferLike | undefined, map: PromptMap) {
+        if (!input?.gotoVisualLineEnd) return false
+        input.gotoVisualLineEnd()
+        vim = { ...vim, cursor: hostPosition(map, input.cursorOffset ?? map.hostText.length), mode: "insert", phase: "idle", count: 0, operator: null, statusMessage: "-- INSERT --" }
+        nativeInsertUndoSaved = false
+        syncMode(state, "insert")
+        return true
+    }
+}
+
+function clampNormalCursor(input: EditBufferLike) {
+    const cursor = input.visualCursor
+    const eol = input.editorView?.getVisualEOL?.()
+    const offset = input.cursorOffset
+    if (!cursor || !eol || offset === undefined) return
+    if (cursor.visualCol === 0) return
+    if (cursor.visualRow === eol.visualRow && (cursor.offset === eol.offset || offset === eol.offset)) input.cursorOffset = Math.max(0, offset - 1)
 }
 
 function createKeybinds(config: VimConfig, log: VimLog): KeybindMap | undefined {

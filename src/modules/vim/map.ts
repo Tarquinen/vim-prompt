@@ -35,8 +35,8 @@ export function hostPosition(map: PromptMap, hostOffset: number): CursorPosition
     return positionFromOffset(map.vimText, map.hostToVim[clamp(hostOffset, 0, map.hostText.length)] ?? 0)
 }
 
-export function hostOffset(map: PromptMap, position: CursorPosition) {
-    return hostOffsetFromVimOffset(map, offsetFromPosition(map.vimText, position))
+export function hostOffset(map: PromptMap, position: CursorPosition, bias: "previous" | "next" = "next") {
+    return hostOffsetFromVimOffset(map, offsetFromPosition(map.vimText, position), bias)
 }
 
 function buildPromptMap(hostText: string, wraps: number[]): PromptMap {
@@ -108,12 +108,19 @@ function visualWrapOffsets(input: EditBufferLike, text: string) {
     return wraps
 }
 
-function hostOffsetFromVimOffset(map: PromptMap, vimOffset: number) {
+function hostOffsetFromVimOffset(map: PromptMap, vimOffset: number, bias: "previous" | "next") {
     const offset = clamp(vimOffset, 0, map.vimText.length)
     if (offset === map.vimText.length) return map.hostText.length
 
     const host = map.vimToHost[offset]
     if (host !== undefined) return host
+
+    if (bias === "previous") {
+        for (let previous = offset - 1; previous >= 0; previous--) {
+            const previousHost = map.vimToHost[previous]
+            if (previousHost !== undefined) return previousHost
+        }
+    }
 
     for (let next = offset + 1; next < map.vimToHost.length; next++) {
         const nextHost = map.vimToHost[next]
