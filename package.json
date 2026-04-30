@@ -1,0 +1,9 @@
+{
+  "name": "vim-prompt",
+  "version": "0.0.1",
+  "exports": {
+    "./tui": {
+      "import": "./tui.tsx"
+    }
+  }
+}
