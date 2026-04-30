@@ -1,1 +1,4 @@
 node_modules/
+.opencode/
+docs/*
+!docs/configuration.md
