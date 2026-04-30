@@ -28,7 +28,7 @@ export function createVimModule(options?: unknown): PromptModule {
             return <VimKeyboard ctx={ctx} config={config} state={state} log={log} />
         },
         renderRight(ctx) {
-            return <VimStatus mode={state.mode} pending={() => readablePending(state.pending())} pendingDisplayDelay={config.pendingDisplayDelay} disabled={ctx.disabled} log={log} requestRender={ctx.requestRender} />
+            return <VimStatus mode={state.mode} pending={() => readablePending(state.pending())} theme={ctx.api.theme.current} pendingDisplayDelay={config.pendingDisplayDelay} disabled={ctx.disabled} log={log} requestRender={ctx.requestRender} />
         },
     }
 }
