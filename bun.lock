@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "vim-prompt",
+      "name": "opencode-vim",
       "dependencies": {
         "@vimee/core": "^0.3.0",
       },

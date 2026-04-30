@@ -62,7 +62,7 @@ function specHasSnippets(spec: unknown) {
 }
 
 const plugin: TuiPluginModule & { id: string } = {
-    id: "local.vim-prompt",
+    id: "local.opencode-vim",
     tui,
 }
 

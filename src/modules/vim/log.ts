@@ -8,7 +8,7 @@ export function createVimLog(config: VimConfig): VimLog {
     if (!config.debug) return () => {}
 
     const path = config.debugPath ?? defaultPath()
-    void append(path, `\n--- vim-prompt debug ${new Date().toISOString()} ---\n`)
+    void append(path, `\n--- opencode-vim debug ${new Date().toISOString()} ---\n`)
 
     return (event, data) => {
         const suffix = data ? ` ${safeJson(data)}` : ""
@@ -18,7 +18,7 @@ export function createVimLog(config: VimConfig): VimLog {
 
 function defaultPath() {
     const home = process.env.HOME
-    return home ? join(home, ".cache/opencode/vim-prompt.log") : "/tmp/vim-prompt.log"
+    return home ? join(home, ".cache/opencode/opencode-vim.log") : "/tmp/opencode-vim.log"
 }
 
 async function append(path: string, text: string) {

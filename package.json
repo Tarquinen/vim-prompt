@@ -1,5 +1,5 @@
 {
-  "name": "vim-prompt",
+  "name": "opencode-vim",
   "version": "0.0.1",
   "exports": {
     "./tui": {
