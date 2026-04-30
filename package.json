@@ -7,6 +7,9 @@
     }
   },
   "dependencies": {
+    "@opentui/core": "^0.2.1",
+    "@opentui/solid": "^0.2.1",
+    "solid-js": "^1.9.12",
     "@vimee/core": "^0.3.0"
   }
 }
