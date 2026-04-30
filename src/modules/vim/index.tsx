@@ -33,7 +33,7 @@ export function createVimModule(options?: unknown): PromptModule {
                     enabled: state.mode() === "insert",
                     onSelect() {
                         log("command.normal", { mode: state.mode(), pending: state.pending() })
-                        state.setMode("normal")
+                        runVimAction("normal", state, ctx)
                         state.setPending("")
                         ctx.requestRender()
                     },

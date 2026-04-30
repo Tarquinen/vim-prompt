@@ -14,6 +14,15 @@ type EditBufferLike = {
         logicalCol: number
         offset: number
     }
+    editorView?: {
+        getVisualEOL?: () => {
+            visualRow: number
+            visualCol: number
+            logicalRow: number
+            logicalCol: number
+            offset: number
+        }
+    }
     plainText?: string
     moveCursorLeft?: () => boolean
     moveCursorRight?: () => boolean
@@ -21,6 +30,7 @@ type EditBufferLike = {
     moveCursorDown?: () => boolean
     gotoLineStart?: () => void
     gotoLineEnd?: () => void
+    gotoVisualLineEnd?: () => boolean
     moveWordForward?: () => boolean
     moveWordBackward?: () => boolean
     deleteChar?: () => boolean
@@ -33,6 +43,7 @@ export function runVimAction(action: VimAction, state: VimState, ctx: PromptCont
     switch (action) {
         case "normal":
             state.setMode("normal")
+            movePromptCursor(ctx, "left")
             return true
         case "insert":
         case "append":
@@ -104,8 +115,7 @@ function movePromptCursor(ctx: PromptContext, action: "left" | "right" | "up" | 
             input.gotoLineStart?.()
             return typeof input.gotoLineStart === "function"
         case "lineEnd":
-            input.gotoLineEnd?.()
-            return typeof input.gotoLineEnd === "function"
+            return moveToNormalLineEnd(input)
         case "wordNext":
             return input.moveWordForward?.() ?? false
         case "wordPrev":
@@ -124,7 +134,31 @@ function moveBoundedHorizontal(input: EditBufferLike, direction: "left" | "right
         return false
     }
 
+    if (moved && direction === "right" && isAtVisualLineEnd(input)) {
+        input.cursorOffset = beforeOffset
+        return false
+    }
+
     return moved
+}
+
+function moveToNormalLineEnd(input: EditBufferLike) {
+    const moved = input.gotoVisualLineEnd?.() ?? false
+    clampNormalLineEnd(input)
+    return moved || typeof input.gotoVisualLineEnd === "function"
+}
+
+function clampNormalLineEnd(input: EditBufferLike) {
+    const cursor = input.visualCursor
+    if (!cursor || cursor.visualCol === 0 || input.cursorOffset === undefined) return
+    moveBoundedHorizontal(input, "left")
+}
+
+function isAtVisualLineEnd(input: EditBufferLike) {
+    const cursor = input.visualCursor
+    const eol = input.editorView?.getVisualEOL?.()
+    if (!cursor || !eol) return false
+    return cursor.visualRow === eol.visualRow && cursor.offset === eol.offset
 }
 
 function deletePromptChar(ctx: PromptContext) {
