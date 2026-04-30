@@ -3,3 +3,4 @@ node_modules/
 docs/*
 !docs/configuration.md
 assets/*.mp4
+assets/screenshot-*.png
