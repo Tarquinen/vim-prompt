@@ -10,6 +10,7 @@ import { resolveKeymap } from "./keymap"
 import { isTextSequence, keyNotation } from "./keys"
 import { createVimLog } from "./log"
 import type { VimLog } from "./log"
+import { clearOperator, handleOperatorKey } from "./operator"
 import { createVimState } from "./state"
 import { VimStatus } from "./view"
 
@@ -37,6 +38,7 @@ export function createVimModule(options?: unknown): PromptModule {
                         runVimAction("normal", state, ctx)
                         applyVimCursorStyle(ctx, config.cursorStyles[state.mode()])
                         state.setPending("")
+                        clearOperator(state)
                         ctx.requestRender()
                     },
                 },
@@ -82,12 +84,21 @@ function VimKeyboard(props: { ctx: PromptContext; config: VimConfig; state: Retu
         }
 
         const mode = props.state.mode()
+        if (mode === "normal" && handleOperatorKey(key, props.state, props.ctx)) {
+            event.preventDefault()
+            event.stopPropagation()
+            clearPending()
+            props.ctx.requestRender()
+            return
+        }
+
         const sequence = props.state.pending() + key
         const result = resolveKeymap(props.config, mode, sequence)
         props.log("keyboard.resolve", { key, mode, sequence, result: result.kind, action: result.kind === "action" ? result.action : undefined })
 
         if (result.kind === "none") {
             if (mode === "insert") flushPending(props.ctx)
+            if (mode === "normal") clearOperator(props.state)
             clearPending()
             if (mode === "normal") {
                 event.preventDefault()
