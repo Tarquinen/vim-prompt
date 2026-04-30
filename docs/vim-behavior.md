@@ -32,7 +32,7 @@ Default config values:
 
 ```ts
 defaultMode: "insert"
-keymapTimeout: 1000
+keymapTimeout: 500
 pendingDisplayDelay: 120
 cursorStyles: {
   insert: { style: "line", blinking: true },
@@ -47,7 +47,7 @@ Vim behavior comes from `@vimee/core`; `vim-prompt` does not maintain a separate
   "./plugin/vim-prompt",
   {
     "vim": {
-      "keymapTimeout": 1000,
+      "keymapTimeout": 500,
       "pendingDisplayDelay": 120,
       "cursorStyles": {
         "insert": { "style": "line", "blinking": true },
