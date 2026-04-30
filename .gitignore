@@ -2,3 +2,4 @@ node_modules/
 .opencode/
 docs/*
 !docs/configuration.md
+assets/*.mp4

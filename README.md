@@ -2,6 +2,8 @@
 
 Adds Vim-style insert and normal mode editing to the OpenCode prompt.
 
+![Demo](./assets/demo.gif)
+
 ## Installation
 
 Install from the CLI:
