@@ -36,6 +36,11 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
                 return true
             }
 
+            if (state.mode() === "insert" && key === "<CR>") {
+                cancelPendingInsert(ctx, offset)
+                return false
+            }
+
             const wasPending = keybinds?.isPending() ?? false
             const pendingBefore = pendingInsert
             sync(text, cursor)
@@ -101,6 +106,16 @@ export function createVimeeAdapter(state: VimState, config: VimConfig, log: VimL
             state.setPending("")
             ctx.requestRender()
         }, config.keymapTimeout)
+    }
+
+    function cancelPendingInsert(ctx: PromptContext, offset?: number) {
+        if (!keybinds?.isPending()) return
+        if (timer) clearTimeout(timer)
+        timer = undefined
+        keybinds.cancel()
+        flushPendingInsert(ctx, pendingInsert, offset)
+        pendingInsert = ""
+        state.setPending("")
     }
 
     function flushPendingInsert(ctx: PromptContext, value: string, offset?: number) {
