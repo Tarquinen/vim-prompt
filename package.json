@@ -1,6 +1,6 @@
 {
   "name": "opencode-vim",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "exports": {
     "./tui": {
       "import": "./tui.tsx"
@@ -11,5 +11,8 @@
     "@opentui/solid": "^0.2.1",
     "solid-js": "^1.9.12",
     "@vimee/core": "^0.3.0"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.14.30"
   }
 }
