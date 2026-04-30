@@ -5,6 +5,7 @@ export type VimKeymaps = Partial<Record<VimMode, Record<string, VimAction>>>
 export type VimConfig = {
     defaultMode: VimMode
     timeoutlen: number
+    pendingDisplayDelay: number
     debug: boolean
     debugPath?: string
     keymaps: Record<VimMode, Record<string, VimAction>>
@@ -13,6 +14,7 @@ export type VimConfig = {
 export type VimOptions = {
     defaultMode?: VimMode
     timeoutlen?: number
+    pendingDisplayDelay?: number
     debug?: boolean
     debugPath?: string
     keymaps?: VimKeymaps
@@ -49,6 +51,7 @@ export function createVimConfig(options: unknown): VimConfig {
     return {
         defaultMode: input.defaultMode ?? "insert",
         timeoutlen: Math.max(0, input.timeoutlen ?? 300),
+        pendingDisplayDelay: Math.max(0, input.pendingDisplayDelay ?? 120),
         debug: input.debug ?? process.env.VIM_PROMPT_DEBUG === "1",
         debugPath: input.debugPath,
         keymaps: {
@@ -67,6 +70,7 @@ function readOptions(options: unknown): VimOptions {
     return {
         defaultMode: isMode(source.defaultMode) ? source.defaultMode : undefined,
         timeoutlen: typeof source.timeoutlen === "number" ? source.timeoutlen : undefined,
+        pendingDisplayDelay: typeof source.pendingDisplayDelay === "number" ? source.pendingDisplayDelay : undefined,
         debug: typeof source.debug === "boolean" ? source.debug : undefined,
         debugPath: typeof source.debugPath === "string" ? source.debugPath : undefined,
         keymaps: readKeymaps(source.keymaps),
